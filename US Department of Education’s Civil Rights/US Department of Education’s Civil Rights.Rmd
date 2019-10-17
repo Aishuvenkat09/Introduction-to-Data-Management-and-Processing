@@ -1,0 +1,224 @@
+---
+title: " US Department of Education’s Civil Rights"
+author: "Aishwarya"
+date: "10/16/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+We would like to investigate whether Black students receive a disproportionate number of in-school suspensions
+
+```{r, warning = FALSE, echo=TRUE}
+library(readr)
+library(ggplot2)
+library(dplyr)
+school <- read_csv("C:/Users/Aishwarya/Desktop/NEU/Introduction to Data management/hw2/Data Files and Layouts/CRDC 2015-16 School Data.csv")
+
+```
+
+Create a new data.frame with the following columns:
+• The total number of students enrolled at each school
+• The number of Black students enrolled at each school
+• The total number of students who received one or more in-school suspension (including non-disabled
+students and disabled students served by IDEA)
+• The number of Black students who received one or more in-school suspension (including non-disabled
+students and disabled students served by IDEA)
+• The proportion of Black students at each school among all students
+• The proportion of students who received one or more in-school suspension who are Black among all
+suspended students
+Plot the proportion of Black students at each school (on the x-axis) versus the proportion of suspended
+students who are Black (on the y-axis). Include a smoothing line on the plot.
+
+```{r pressure, echo=TRUE, warning = FALSE}
+#CHECKING FOR PRESCENCE OF RESERVE CODES
+any(school$TOT_ENR_F < 0)
+
+#REPLACING EACH REQUIRIED COLOUMN CONTAINING RESERVE CODES WITH NA
+school$TOT_ENR_M<-   ifelse(school$TOT_ENR_M < 0, NA, school$TOT_ENR_M)
+school$TOT_ENR_F<-   ifelse(school$TOT_ENR_F < 0, NA, school$TOT_ENR_F)
+
+
+school$SCH_ENR_BL_F<-   ifelse(school$SCH_ENR_BL_F< 0, NA, school$SCH_ENR_BL_F)
+school$SCH_ENR_BL_M<-   ifelse(school$SCH_ENR_BL_M< 0, NA, school$SCH_ENR_BL_M)
+
+
+school$TOT_DISCWDIS_ISS_IDEA_F <-   ifelse(school$TOT_DISCWDIS_ISS_IDEA_F < 0, NA, school$TOT_DISCWDIS_ISS_IDEA_F)
+school$TOT_DISCWDIS_ISS_IDEA_M<-   ifelse(school$TOT_DISCWDIS_ISS_IDEA_M < 0, NA, school$TOT_DISCWDIS_ISS_IDEA_M)
+school$TOT_DISCWODIS_ISS_M <-   ifelse(school$TOT_DISCWODIS_ISS_M < 0, NA, school$TOT_DISCWODIS_ISS_M )
+school$TOT_DISCWODIS_ISS_F <-   ifelse(school$TOT_DISCWODIS_ISS_F < 0, NA, school$TOT_DISCWODIS_ISS_F)
+
+
+school$SCH_DISCWODIS_ISS_BL_M <-   ifelse(school$SCH_DISCWODIS_ISS_BL_M < 0, NA, school$SCH_DISCWODIS_ISS_BL_M)
+school$SCH_DISCWODIS_ISS_BL_F <-   ifelse(school$SCH_DISCWODIS_ISS_BL_F < 0, NA, school$SCH_DISCWODIS_ISS_BL_F)
+school$SCH_DISCWDIS_ISS_IDEA_BL_F <-   ifelse(school$SCH_DISCWDIS_ISS_IDEA_BL_F < 0, NA, school$SCH_DISCWDIS_ISS_IDEA_BL_F)
+school$SCH_DISCWDIS_ISS_IDEA_BL_M <-   ifelse(school$SCH_DISCWDIS_ISS_IDEA_BL_M < 0, NA, school$SCH_DISCWDIS_ISS_IDEA_BL_M)
+
+
+#CREATING NEW DATAFRAME AND INSERTING NEW COMPUTED VARIABLES
+d1 <- data.frame(transmute(school,
+      Total_students = TOT_ENR_M + TOT_ENR_F,
+      
+      Total_Black_students = SCH_ENR_BL_M + SCH_ENR_BL_F,
+      
+      Total_in_suspension = TOT_DISCWDIS_ISS_IDEA_M + TOT_DISCWDIS_ISS_IDEA_F +TOT_DISCWODIS_ISS_M + TOT_DISCWODIS_ISS_F,
+      
+      Total_Black_in_suspension = SCH_DISCWODIS_ISS_BL_M + SCH_DISCWODIS_ISS_BL_F + SCH_DISCWDIS_ISS_IDEA_BL_M + SCH_DISCWDIS_ISS_IDEA_BL_F ,
+      
+      Proportion_Black = Total_Black_students/Total_students,
+      
+      Proportion_Black_in_suspension = Total_Black_in_suspension /Total_in_suspension))
+
+
+#PLOTTING USING GEOM_BIN2D
+ggplot(d1) + geom_bin2d(mapping = aes(x =Proportion_Black, y = Proportion_Black_in_suspension)) + geom_smooth(mapping = aes(x =Proportion_Black, y = Proportion_Black_in_suspension))
+
+```
+OBSERVATION:-
+
+The plot describes a positive relation between proportion of blacks and proprtion of suspended blacks but we can observe that at a certain point on x-axis there are HIGHER values of blacks in suspension which indicates an OVER REPRESENTATION of Blacks in school suspensions.
+
+
+```{r}
+#CALCULATING OVERALL PROPORTIONS
+overall_prop_black <- mean(d1$Proportion_Black, na.rm = TRUE)
+overall_prop_black_susp  <- mean(d1$Proportion_Black_in_suspension, na.rm = TRUE)
+
+overall_prop_black
+overall_prop_black_susp 
+```
+
+OBSERVATION:-
+From calculations we can say that black students are OVER REPRESENTED.
+
+We would like to investigate whether disabled students are more often disciplined with corporal punishment.
+Create a new data.frame containing only schools that use corporal punishment with the following columns:
+• The total number of students enrolled at each school
+• The number of disabled students (served by IDEA) at each school
+• The total number of students who were disciplined with corporal punishment
+• The number of disabled students (served by IDEA) who were disciplined with corporal punishment
+• The proportion of disabled students (served by IDEA) at each school among of all students
+• The proportion of students who were disciplined with corporal punishment who are disabled (served by
+IDEA) among all disciplined students.
+
+Plot the proportion of disabled students at each school (on the x-axis) versus the proportion of disciplined
+students who are disabled (on the y-axis).
+```{r, warning = FALSE}
+
+#REPLACING EACH REQUIRIED COLOUMN CONTAINING RESERVE CODES WITH NA
+school$TOT_IDEAENR_M <-   ifelse(school$TOT_IDEAENR_M < 0, NA, school$TOT_IDEAENR_M)
+school$TOT_IDEAENR_F <-   ifelse(school$TOT_IDEAENR_F < 0, NA, school$TOT_IDEAENR_F)
+
+
+school$TOT_DISCWODIS_CORP_M <-   ifelse(school$TOT_DISCWODIS_CORP_M < 0, NA, school$TOT_DISCWODIS_CORP_M)
+school$TOT_DISCWODIS_CORP_F <-   ifelse(school$TOT_DISCWODIS_CORP_F < 0, NA, school$TOT_DISCWODIS_CORP_F)
+school$TOT_DISCWDIS_CORP_IDEA_M <-   ifelse(school$TOT_DISCWDIS_CORP_IDEA_M < 0, NA, school$TOT_DISCWDIS_CORP_IDEA_M)
+school$TOT_DISCWDIS_CORP_IDEA_F <-   ifelse(school$TOT_DISCWDIS_CORP_IDEA_F < 0, NA, school$TOT_DISCWDIS_CORP_IDEA_F)
+
+#CREATING NEW DATAFRAME AND INSERTING NEW COMPUTED VARIABLES
+d2 <- data.frame(transmute(school,
+      Total_students = TOT_ENR_M + TOT_ENR_F,
+      
+      Total_disable_students = TOT_IDEAENR_M + TOT_IDEAENR_F,
+      
+      Total_students_punishment =TOT_DISCWODIS_CORP_M+ TOT_DISCWODIS_CORP_F+TOT_DISCWDIS_CORP_IDEA_M+ TOT_DISCWDIS_CORP_IDEA_F,
+      
+      Disabled_punished = TOT_DISCWDIS_CORP_IDEA_M+ TOT_DISCWDIS_CORP_IDEA_F,
+      
+      Proportion_disabled = Total_disable_students/Total_students,
+      
+      Proportion_disabled_punished = Disabled_punished/ Total_students_punishment))
+
+
+#PLOTTING USING GEOM_BIN2D
+ggplot(d2) + geom_bin2d(mapping = aes(x =  Proportion_disabled, y = Proportion_disabled_punished )) + geom_smooth(mapping = aes(x =  Proportion_disabled, y = Proportion_disabled_punished ))
+```
+
+OBSERVATION:-
+
+The relationship seems to be almost constant
+
+
+```{r, warning = FALSE}
+#CALCULATING OVERALL PROPORTIONS
+overall_prop_disabled = mean(d2$Proportion_disabled, na.rm = TRUE)
+overall_prop_disabled_punished = mean(d2$Proportion_disabled_punished, na.rm = TRUE)
+
+
+overall_prop_disabled
+overall_prop_disabled_punished
+
+```
+OBSERVATION:-
+
+As said before, the variation slightly differs. so we can say that disabled students are equally treated with others when it comes to corporal punishment.
+
+We would like to investigate whether Black and Hispanic students are over- or under-represented in Gifted &
+Talented programs.
+Create a new data.frame containing only schools with a Gifted & Talented program with the following
+columns:
+• The total number of students enrolled at each school
+• The number of Black and Hispanic students at each school
+• The total number of students in the school’s GT program
+• The number of students in the GT program who are Black or Hispanic
+• The proportion of students at each school who are Black or Hispanic among all students
+• The proportion of students in the GT program who are Black or Hispanic among students in the GT
+program
+Plot the proportion of Black and Hispanic students at each school (on the x-axis) versus the proportion of
+GT students who Black or Hispanic (on the y-axis).
+```{r, warning = FALSE}
+
+#REPLACING EACH REQUIRIED COLOUMN CONTAINING RESERVE CODES WITH NA
+school$SCH_ENR_HI_M <-   ifelse(school$SCH_ENR_HI_M < 0, NA, school$SCH_ENR_HI_M)
+school$SCH_ENR_HI_F <-   ifelse(school$SCH_ENR_HI_F < 0, NA, school$SCH_ENR_HI_F)
+
+
+school$TOT_GTENR_M <-   ifelse(school$TOT_GTENR_M < 0, NA, school$TOT_GTENR_M)
+school$TOT_GTENR_F <-   ifelse(school$TOT_GTENR_F < 0, NA, school$TOT_GTENR_F)
+
+school$SCH_GTENR_BL_M <-   ifelse(school$SCH_GTENR_BL_M < 0, NA, school$SCH_GTENR_BL_M)
+school$SCH_GTENR_BL_F <-   ifelse(school$SCH_GTENR_BL_F < 0, NA, school$SCH_GTENR_BL_F)
+
+school$SCH_GTENR_HI_M <-   ifelse(school$SCH_GTENR_HI_M< 0, NA, school$SCH_GTENR_HI_M)
+school$SCH_GTENR_HI_F <-   ifelse(school$SCH_GTENR_HI_F< 0, NA, school$SCH_GTENR_HI_F)
+
+
+#CREATING NEW DATAFRAME AND INSERTING NEW COMPUTED VARIABLES
+d3 <- data.frame(transmute(school,
+      Total_students= TOT_ENR_M + TOT_ENR_F,
+      Black_and_Hispanic = SCH_ENR_HI_M + SCH_ENR_HI_F + SCH_ENR_BL_M + SCH_ENR_BL_F,
+      Total_students_GT = TOT_GTENR_M + TOT_GTENR_F,
+      Black_or_Hispanic_GT= SCH_GTENR_BL_M + SCH_GTENR_BL_F+ SCH_GTENR_HI_M + SCH_GTENR_HI_F,
+      Proportion_Black_or_Hispanic= Black_and_Hispanic/Total_students,
+      Proportion_Black_or_Hispanic_GT= Black_or_Hispanic_GT/Total_students_GT))
+
+
+#PLOTTING WITH GEOM_BIN2D
+ggplot(d3) +
+  geom_bin2d(mapping = aes(x =  Proportion_Black_or_Hispanic, y = Proportion_Black_or_Hispanic_GT)) +
+  geom_smooth(mapping = aes(x =  Proportion_Black_or_Hispanic, y = Proportion_Black_or_Hispanic_GT))
+
+
+```
+
+OBSERVATION:-
+
+Clearly, there is a positive relation but with negative slope between both proportions. At any point on Proportion of Black/Hispanic there exists corresponding point on Proportion of gifted Black/Hispanic with LOWER VALUE which is UNDER REPRESENTATION.
+
+```{r, warning = FALSE}
+
+#CALCULATING OVERALL PROPORTIONS
+overall_prop_B_H= mean(d3$Proportion_Black_or_Hispanic, na.rm = TRUE)
+overall_prop_B_H_GT = mean(d3$Proportion_Black_or_Hispanic_GT, na.rm = TRUE)
+
+overall_prop_B_H
+overall_prop_B_H_GT
+```
+
+OBSERVATION:-
+
+As, 
+overall proportion of Gifted Black and Hispanic is LOWER than overall proportion of Black and Hispanic, hence it is UNDER REPRESENTATION.
