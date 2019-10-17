@@ -1,0 +1,120 @@
+---
+title: "hw3-Aishwarya Vantipuli"
+author: "Aishwarya"
+date: "February 12, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+############################################## PART-A #########################################
+
+## PROBLEM-1
+```{r cars}
+#Loading Libraries
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(dplyr)
+
+
+
+
+
+
+```
+
+Filtering the data to include only the authors for whom a gender was predicted as ‘male’ or ‘female’ with a
+probability of 0.95 or greater, and then create a bar plot showing the total number of distinct male and
+female authors published each year
+
+```{r , echo= TRUE, warning=FALSE}
+#install.packages(c("DBI", "RSQLite", "dbplyr"))
+#install.packages("RMySQL")
+
+
+library("dbplyr")
+library("RMySQL")
+library("RSQLite")
+library("DBI")
+
+
+
+#cREATING cONNECTION
+con <- dbConnect(MySQL(), 
+                 user = 'root', 
+                 password = 'Premkumar007', 
+                 host = 'localhost',
+                 dbname = 'dblp')
+#LOADING TABLES
+dblp_gen <- tbl(con, "general")
+
+dblp_aut <- tbl(con, "authors")
+
+
+
+total <-dblp_aut %>% left_join(dblp_gen) %>% group_by(year) %>%
+  filter(gender %in% c("M", "F") & prob >= 0.95)   %>%
+  summarise(Total_aut = n_distinct(name)) 
+
+Total_sex <- dblp_aut %>% left_join(dblp_gen) %>% group_by(year, gender) %>%
+  filter(gender %in% c("M", "F") & prob >= 0.95)   %>%
+  summarise(Total_aut_sex = n_distinct(name)) 
+
+
+#Prob 3
+Total_sex %>%collect() %>%
+  
+  ggplot() +geom_col(aes(x = year,y = Total_aut_sex, fill = gender)) +
+  
+   ggtitle('Barplot of No. of authors in male and female within each Year')
+
+  
+#prob 5
+
+
+
+  
+
+
+
+```
+
+There are no female authors untill arround 1970's. Female authors are increasing at lower rates comapared to male. There seems to be decrease in authors publications in recent years.
+
+
+```{r , echo= TRUE, warning=FALSE}
+
+#prob 4
+
+right_join(Total_sex,total) %>%
+  group_by(year, gender) %>% 
+  summarise(prop = Total_aut_sex/Total_aut) %>% 
+  ggplot() + geom_col(aes(x= year, y = prop, fill = gender)) +
+  ggtitle("Proportion of male and female authors in each year")
+
+```
+
+Proportion of male is way higher than female and there are no female authors untill around 1965
+
+##PROBLEM 5
+```{r , echo=TRUE, warning=FALSE}
+#prob 5
+
+
+dblp_aut %>% left_join(dblp_gen) %>% group_by(year, gender, pos = 0) %>%
+  filter(gender %in% c("M", "F") & prob > 0.95) %>% 
+  summarise(pub_num = n_distinct(k)) %>% 
+  ggplot() + geom_col(aes(x = gender,y = pub_num, fill = gender)) +
+  ggtitle('No. of publications')
+```
+There are lower number of female publications than male
+```{r , echo = TRUE}
+
+
+
+
+```
+
