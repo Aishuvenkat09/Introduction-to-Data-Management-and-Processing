@@ -1,0 +1,212 @@
+---
+title: "Basic data manipulation and visualization"
+author: "Aishwarya"
+date: "January 21, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#install.packages("knitr")
+#install.packages("markdown")
+ #uninstall_tinytex()
+library(knitr)
+library(markdown)
+ 
+```
+                             
+
+
+Let us write a function to subset a given  dataset
+
+```{r }
+library(ggplot2)
+sub <- function(data, ...){
+  arg <- list(...)
+  a = data[0]
+    
+  for(i in arg){
+    
+    a <- cbind(a, data[i])
+    }
+
+return(a)
+}
+```
+
+Testing it on mpg dataset
+```{r cars}
+sub(mpg, "drv" ,3, "cyl", 1, 4)
+```
+
+
+Now, writing a function to plot each column of dataset.If it’s a continuous variable (numeric), create a histogram. If it’s a categorical variable (character or factor),
+create a bar plot.
+```{r pressure, echo=TRUE}
+plot <- function(data){
+  for(i in names(data)){
+    for(x in data[i]){
+      if(is.numeric(x)){
+        gh <- ggplot(data, mapping = aes(x = x)) + geom_histogram(bins = 10, fill ="yellow" , color ="green" ) + labs(x = i) 
+       
+        print(gh)
+      }
+      else{
+        gb <- ggplot(data, mapping = aes(x = x)) + geom_bar(fill = "blue", color = "red") + labs(x=i) 
+        print(gb)
+      }
+    }
+  }
+  
+}
+
+plot(mpg)
+```
+
+
+
+
+
+Use side-by-side boxplots to visualize the distribution of price for each level of color.
+```{r}
+ggplot(diamonds, mapping= aes(x = color, y = price)) + geom_boxplot(mapping= aes(fill = color)) + 
+  ggtitle("Box Plot of Diamond Color Vs Price")
+
+```
+We notice that,
+Worst diamonds have larger spread and less outliers compared to best diamonds.
+People are paying high for better quality diamonds(G) rather than best(D).
+
+
+Use side-by-side boxplots to visualize the distribution of carat for each level of color.
+
+```{r}
+ggplot(diamonds, mapping = aes(x = color, y = carat, fill = color)) + geom_boxplot() +
+  ggtitle("Box Plot of Diamond Color Vs Carat")
+```
+             
+Best diamonds has less weight whereas worst are more heavier.
+From previous plot, people are paying more for Heavier and cheaper diamonds.                           
+                                        
+                                        
+scatter plot of carat versus price, using either an additional aesthetic or faceting to visualize the
+relationship between carat and price for each level of color.
+
+```{r}
+
+ggplot(data = diamonds,
+       mapping = aes(x= carat, y= price)) +
+  geom_point() + geom_smooth(method = loess) + facet_wrap(~color)
+```
+                                        
+It can be said that most of the best diamonds has low weights and are sold at relatively lower prices than the better and worst diamonds. 
+It is strange that none of the best quality diamonds weighs more than 3.5 carats and couldn't cross \$16000 whereas even worst diamonds with far lesser weights costs around \$18000.
+          
+          
+Exploratory Data Analysis                        
+```{r}
+
+library(readr)
+library(dplyr)
+#reading data as data frame
+data <- as.data.frame(read_csv("C:/Users/Aishwarya/Desktop/NEU/Introduction to Data management/hw3/master.csv"))
+
+
+#Tidying
+#Data is downloaded from kaggle.
+#As the data is almost clean, 
+#basic transformation would suffice the current requirement.
+
+
+#Normalising GDP variable
+data <- mutate(data,
+               `gdp in $100k` = `gdp_for_year ($)`/(100*1000))
+
+#Excluding unwanted variables
+data <- select(data, -`country-year`, -`gdp_for_year ($)`)
+
+
+
+#Displaying first 10 observations
+data[1:10,]
+
+
+
+```
+  
+
+
+
+```{r , echo=TRUE}
+
+#obs 1
+ggplot(data) +
+  geom_bar(data,mapping = aes(x = generation,fill = sex)) + 
+  ggtitle(" Distribution of Generation") +
+  coord_flip()
+
+data %>% count(generation)
+
+
+```
+
+Based on graph, Genration X and Silent have higher number of suicide rates. Calculated results also shows the same.
+
+
+```{r , echo=TRUE}
+#OBS 2
+
+ggplot(data) + geom_histogram(aes(x = `gdp in $100k`), 
+                              fill = 'blue', alpha= 0.5) + 
+  ggtitle("Distribution of GDP in $100k") +
+  xlab("GDP in $100k")
+
+
+data %>% count(cut_interval(`gdp in $100k`, n = 10))
+
+
+```
+
+```{r , echo=TRUE}
+
+#obs 3
+
+ggplot(data) + geom_boxplot(aes(y = suicides_no,  x = age)) +
+  facet_grid(~sex) +
+ coord_flip() +
+  ylim(c(0,1000)) +
+  ggtitle("Boxplot of suicide count vs age in male and female")
+
+
+```
+There are comparetively higher no. of suicides recorded in male than female. Women are undergoing higher levels of stress at the age in between 35-74 years whereas in men higher rate is observed in between 35-54 years.
+
+```{r , echo=TRUE}
+#obs 4
+
+world <- ggplot2::map_data("world")
+
+df <- data.frame(region = c(data$country))
+
+
+world_new <- world[world$region %in% df$region, ]
+
+ggplot(world_new) +
+  geom_polygon(mapping=aes(x=long, y=lat, group = group),
+               fill= 'red', color = "black") +
+  ggtitle("Map view of countries given in dataset")
+ 
+```
+
+```{r , echo=TRUE}
+
+#obs 5
+ggplot(data, mapping = aes(x = `gdp in $100k`, y = suicides_no)) +
+  geom_point( position = "jitter", color = "green", alpha = 0.5) +
+  geom_smooth(color = 'red') +
+  ggtitle("GDP vs Suicides count")
+```
+
+Although there are higher no. of sucides in less earning countries, the trend seems to decrease at first and then increase proportionately with increase in gdp                                    
+                                        
